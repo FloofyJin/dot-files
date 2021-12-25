@@ -1,0 +1,8 @@
+#keyboard
+setxkbmap us &
+
+#wallpaper
+nitrogen --restore &
+
+#compositor
+picom -f &
