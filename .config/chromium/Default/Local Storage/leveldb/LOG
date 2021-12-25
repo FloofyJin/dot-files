@@ -1,0 +1,9 @@
+2021/12/16-17:11:20.130 3 Reusing MANIFEST /home/nymph/.config/chromium/Default/Local Storage/leveldb/MANIFEST-000001
+2021/12/16-17:11:20.134 3 Recovering log #3
+2021/12/16-17:11:20.135 3 Reusing old log /home/nymph/.config/chromium/Default/Local Storage/leveldb/000003.log 
+2021/12/16-17:25:29.885 3 Level-0 table #5: started
+2021/12/16-17:25:29.899 3 Level-0 table #5: 105782 bytes OK
+2021/12/16-17:25:29.905 3 Delete type=0 #3
+2021/12/16-18:16:24.460 10 Level-0 table #7: started
+2021/12/16-18:16:24.477 10 Level-0 table #7: 97141 bytes OK
+2021/12/16-18:16:24.483 10 Delete type=0 #4
