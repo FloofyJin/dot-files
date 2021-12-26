@@ -288,6 +288,168 @@ theme.weather = lain.widget.weather({
 })
 --]]
 
+--------------------------------my volume
+--[[local action_name =
+    wibox.widget {
+    text = "Brightness",
+    font = "SFMono Nerd Font Mono Heavy  10",
+    align = "left",
+    widget = wibox.widget.textbox
+}
+local icon =
+    wibox.widget {
+    layout = wibox.layout.align.vertical,
+    expand = "none",
+    nil,
+    {image = icons.brightness, resize = true, widget = wibox.widget.imagebox},
+    nil
+}
+local action_level =
+    wibox.widget {
+    {
+        {icon, margins = dpi(5), widget = wibox.container.margin},
+        widget = clickable_container
+    },
+    bg = beautiful.groups_bg,
+    shape = function(cr, width, height)
+        gears.shape.rounded_rect(cr, width, height, beautiful.groups_radius)
+    end,
+    widget = wibox.container.background
+}
+local slider =
+    wibox.widget {
+    nil,
+    {
+        id = "brightness_slider",
+        bar_shape = gears.shape.rounded_rect,
+        bar_height = dpi(24),
+        bar_color = "#22262d",
+        bar_active_color = "#b2bfd9cc",
+        handle_color = "#e9efff",
+        handle_shape = gears.shape.circle,
+        handle_width = dpi(24),
+        handle_border_color = "#000000aa",
+        handle_border_width = dpi(2),
+        maximum = 100,
+        widget = wibox.widget.slider
+    },
+    nil,
+    expand = "none",
+    forced_height = dpi(24),
+    layout = wibox.layout.align.vertical
+}
+local brightness_slider = slider.brightness_slider
+brightness_slider:connect_signal(
+    "property::value",
+    function()
+        local brightness_level = brightness_slider:get_value()
+
+        spawn("light -S " .. math.max(brightness_level, 5), false)
+
+        -- Update brightness osd
+        awesome.emit_signal("module::brightness_osd", brightness_level)
+    end
+)
+brightness_slider:buttons(
+    gears.table.join(
+        awful.button(
+            {},
+            4,
+            nil,
+            function()
+                if brightness_slider:get_value() > 100 then
+                    brightness_slider:set_value(100)
+                    return
+                end
+                brightness_slider:set_value(brightness_slider:get_value() + 5)
+            end
+        ),
+        awful.button(
+            {},
+            5,
+            nil,
+            function()
+                if brightness_slider:get_value() < 0 then
+                    brightness_slider:set_value(0)
+                    return
+                end
+                brightness_slider:set_value(brightness_slider:get_value() - 5)
+            end
+        )
+    )
+)
+local update_slider = function()
+    awful.spawn.easy_async_with_shell(
+        "light -G",
+        function(stdout)
+            local brightness = string.match(stdout, "(%d+)")
+            brightness_slider:set_value(tonumber(brightness))
+        end
+    )
+end
+update_slider()
+local action_jump = function()
+    local sli_value = brightness_slider:get_value()
+    local new_value = 0
+
+    if sli_value >= 0 and sli_value < 50 then
+        new_value = 50
+    elseif sli_value >= 50 and sli_value < 100 then
+        new_value = 100
+    else
+        new_value = 0
+    end
+    brightness_slider:set_value(new_value)
+end
+action_level:buttons(
+    awful.util.table.join(
+        awful.button(
+            {},
+            1,
+            nil,
+            function()
+                action_jump()
+            end
+        )
+    )
+)
+awesome.connect_signal(
+    "widget::brightness",
+    function()
+        update_slider()
+    end
+)
+awesome.connect_signal(
+    "widget::brightness:update",
+    function(value)
+        brightness_slider:set_value(tonumber(value))
+    end
+)
+local brightness_setting =
+    wibox.widget {
+    layout = wibox.layout.fixed.vertical,
+    spacing = dpi(5),
+    action_name,
+    {
+        layout = wibox.layout.fixed.horizontal,
+        spacing = dpi(5),
+        {
+            layout = wibox.layout.align.vertical,
+            expand = "none",
+            nil,
+            {
+                layout = wibox.layout.fixed.horizontal,
+                forced_height = dpi(24),
+                forced_width = dpi(24),
+                action_level
+            },
+            nil
+        },
+        slider
+    }
+}--]]
+---------------------------------------------------------
+
 -- Separators
 local first     = wibox.widget.textbox(markup.font("Terminus 3", " "))
 local spr       = wibox.widget.textbox(' ')
@@ -330,13 +492,6 @@ function theme.at_screen_connect(s)
                            awful.button({}, 3, function () awful.layout.inc(-1) end),
                            awful.button({}, 4, function () awful.layout.inc( 1) end),
                            awful.button({}, 5, function () awful.layout.inc(-1) end)))
---[[	
-    -- Create a taglist widget
-    s.mytaglist = awful.widget.taglist(s, awful.widget.taglist.filter.all, awful.util.taglist_buttons)
-
-    -- Create a tasklist widget
-    s.mytasklist = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, awful.util.tasklist_buttons)
---]]	
 
     --Taglist with custom buttons
 	local taglist_buttons = gears.table.join(
@@ -394,7 +549,7 @@ s.mytaglist = awful.widget.taglist {
         buttons = taglist_buttons
     }
 
-
+------------------------------------------------------------------
     -- Create the wibox
     s.mywibox = awful.wibar({ 
 	    position = "top", 
@@ -402,7 +557,6 @@ s.mytaglist = awful.widget.taglist {
 	    height = dpi(27), 
 	    bg = "#00000050", --theme.bg_normal, 
 	    fg = theme.fg_normal,
-	    --border_width = 5,
     })
     s.mywibox.visible = true
     local left_item = {
@@ -419,6 +573,7 @@ s.mytaglist = awful.widget.taglist {
 	bg = "#0000",	
         shape = gears.shape.rounded_rect,
 	widget = wibox.container.background,
+	wodget = wibox.container.margin({left=5})
     }
     local center_item = {
 	{
@@ -429,37 +584,27 @@ s.mytaglist = awful.widget.taglist {
 	shape = gears.shape.rounded_rect,
 	widget = wibox.container.background
     }
-    local right_item = {
+    --[[local right_item = {
 	layout = wibox.layout.fixed.horizontal,
-	volicon,
-	small_spr,
-    }
+	brightness_setting	
+    }]--]]
 
     -- Add widgets to the wibox
     s.mywibox:setup {
-	    layout = wibox.container.margin,
-	    left = 0,
-	    top = 2,
-	    bottom = 2,
+        layout = wibox.container.margin,
+	top = 2,
+	bottom = 2,
+	{
+	    widget = wibox.container.background,
+    	    bg = "0000",
 	    {
-		widget = wibox.container.background,
-		bg = "#0000",
-		{
-			layout = wibox.layout.align.horizontal,
-			expand = "none",
-			left_item,
-			center_item,
-			right_item,
-		}
-	    }
-
-	    --[[
-	    layout = wibox.layout.align.horizontal,
-	    expand = "none",
-	    left_item,
-	    center_item,
-	    right_item
-	    --]]
+	        layout = wibox.layout.align.horizontal,
+	        expand = "none",
+	        left_item,
+	        center_item,
+	        --right_item
+    	    }
+        }
 	--[[{ -- Left widgets  
 	    layout = wibox.layout.fixed.horizontal,
             small_spr,
